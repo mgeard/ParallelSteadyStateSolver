@@ -1,0 +1,7 @@
+C:\Users\klein\source\repos\ParallelSteadyStateSolver\ParallelSteadyStateSolver\bin\Debug\ParallelSteadyStateSolver.exe.config
+C:\Users\klein\source\repos\ParallelSteadyStateSolver\ParallelSteadyStateSolver\bin\Debug\ParallelSteadyStateSolver.exe
+C:\Users\klein\source\repos\ParallelSteadyStateSolver\ParallelSteadyStateSolver\bin\Debug\ParallelSteadyStateSolver.pdb
+C:\Users\klein\source\repos\ParallelSteadyStateSolver\ParallelSteadyStateSolver\obj\Debug\ParallelSteadyStateSolver.csprojAssemblyReference.cache
+C:\Users\klein\source\repos\ParallelSteadyStateSolver\ParallelSteadyStateSolver\obj\Debug\ParallelSteadyStateSolver.csproj.CoreCompileInputs.cache
+C:\Users\klein\source\repos\ParallelSteadyStateSolver\ParallelSteadyStateSolver\obj\Debug\ParallelSteadyStateSolver.exe
+C:\Users\klein\source\repos\ParallelSteadyStateSolver\ParallelSteadyStateSolver\obj\Debug\ParallelSteadyStateSolver.pdb
