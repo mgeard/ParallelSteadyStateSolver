@@ -56,8 +56,6 @@ namespace ParallelSteadyStateSolver
         }
     }
 
-
-
     public class MarkovChain
     {
         private double[,] Matrix;
