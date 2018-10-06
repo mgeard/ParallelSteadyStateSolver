@@ -83,33 +83,35 @@ namespace ParallelSteadyStateSolver
 
         public SteadyStateValue[] SteadyStateValues() //solve
         {
-            foreach (SteadyStateEquation steadyStateEquation in SteadyStateEquations)
+            //simplifcation can be done to make things simpler from the start
+            foreach (SteadyStateEquation steadyStateEquation in SteadyStateEquations) 
                 steadyStateEquation.Simplify();
-            //SteadyStateEquations[0].SteadyStateValues[0].Value = 0; //not needed
 
             for (int i = 1; i < SteadyStateEquations.Length; i++)
                 for (int j = 1; j < SteadyStateEquations.Length; j++)
                     if (i != j)
                     {
-                        SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]); //j takes in i
+                        //i is substituted into j
+                        SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]); 
                         SteadyStateEquations[j].Consolidate();
                         SteadyStateEquations[j].Simplify();
                     }
 
-            SubstituteIntoOne();
+            double pi_0 = GetPi_0();
+            SolveAll(pi_0);
 
             return SolvedSteadyStateValues;
         }
 
         #region solving
-        public void SubstituteIntoOne()
+        public double GetPi_0()
         {
             double sum = 1;
 
             for (int i = 1; i < SteadyStateEquations.Length; i++)
                 sum += SteadyStateEquations[i].SteadyStateValues.First().Value;
 
-            SolveAll(1 / sum);
+            return 1 / sum;
         }
 
         public void SolveAll(double pi_0Value)
@@ -161,12 +163,8 @@ namespace ParallelSteadyStateSolver
         public void SubstituteEquation(SteadyStateEquation subEquation)
         {
             for (int i = SteadyStateValues.Count - 1; i >= 0; i--)
-            {
                 if (SteadyStateValues[i].Pi == subEquation.Equivalent)
-                {
                     SubstituteValue(i, subEquation);
-                }
-            }
         }
 
         private void SubstituteValue(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation)
@@ -204,13 +202,13 @@ namespace ParallelSteadyStateSolver
                 {
                     compliment = 1 - SteadyStateValues[i].Value;
                     SteadyStateValues.RemoveAt(i);
+                    break;
                 }
 
             for (int i = 0; i < SteadyStateValues.Count; i++)
                 SteadyStateValues[i].Value /= compliment;
         }
         #endregion substitution
-
 
     }
 
