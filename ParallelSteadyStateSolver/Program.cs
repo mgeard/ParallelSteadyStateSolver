@@ -14,44 +14,28 @@ namespace ParallelSteadyStateSolver
         static void Main(string[] args)
         {
 
-            //double[,] mchain =
-            //{
-            //    {0.65, 0.15, 0.1},
-            //    {0.25, 0.65, 0.4},
-            //    {0.1,  0.2,  0.5},
-            //};
+            double[,] mchain =
+            {
+                {0.65, 0.15, 0.1},
+                {0.25, 0.65, 0.4},
+                {0.1,  0.2,  0.5},
+            };
 
-            //MarkovChain m = new MarkovChain(mchain);
-            //Console.WriteLine(m);
+            MarkovChain m = new MarkovChain(mchain);
+            Console.WriteLine(m);
 
-            //var solved = m.SteadyStateValues();
-            //foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
+            var solved = m.SteadyStateValues();
+            foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
 
-            //var solved2 = m.SteadyStateValues2();
-            //foreach (var s in solved2) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
 
-            //double[,] mchain = new double[N, N];
-            //for (int i = 0; i < N; i++)
-            //{
-            //    for (int j = 0; j < N; j++)
-            //    {
-            //        mchain[i, j] = (i + j) / 200;
-            //    }
-            //}
-            //for (int k = 0; k < 100; k++)
-            //{
-            //    MarkovChain m = new MarkovChain(mchain);
-            //    var solved = m.SteadyStateValues();
-            //    Console.WriteLine(m);
-            //}
-            //foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
 
-            var m = new MarkovChain(AllocateMatrix(N));
+
+            var m2 = new MarkovChain(AllocateMatrix(N));
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var solved = m.SteadyStateValues();
+            var solved2 = m2.SteadyStateValues();
             //foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
 
             stopwatch.Stop();
@@ -207,53 +191,13 @@ namespace ParallelSteadyStateSolver
                     }
                 }
 
-                if (!addedFlag)
+                if (!addedFlag) //is this value guaranteed to have the equivalent Pi
                     SteadyStateValues.Add(new SteadyStateValue(newSteadyStateValue.Pi, newVal));
 
             }
-
-                //foreach (SteadyStateValue newSteadyStateValue in SubEquation.SteadyStateValues)
-                //    SteadyStateValues.Add(new SteadyStateValue(newSteadyStateValue.Pi, newSteadyStateValue.Value * multiplier));
-
-
-
-            //SteadyStateValues.RemoveAt(oldSteadyStateValueIndex);
         }
 
-        //public void Consolidate()
-        //{
-        //    List<int> removalIndices = new List<int>();
-
-        //    for (int i = SteadyStateValues.Count - 1; i >= 0; i--)
-        //        for (int j = SteadyStateValues.Count - 1; j >= 0; j--)
-        //            if (i != j && SteadyStateValues[i].Pi == SteadyStateValues[j].Pi && !removalIndices.Contains(j))
-        //            {
-        //                double p = SteadyStateValues[i].Value;
-        //                removalIndices.Add(i);
-        //                SteadyStateValues[j].Value += p;
-        //            }
-
-        //    removalIndices.ForEach(i => SteadyStateValues.RemoveAt(i));
-        //}
-
-        public void Consolidate()
-        {
-
-            for (int i = SteadyStateValues.Count - 2; i >= 0; i--)
-            {
-                SteadyStateValue last = SteadyStateValues[i + 1];
-                SteadyStateValue current = SteadyStateValues[i];
-
-                if (last.Pi == current.Pi)
-                {
-                    current.Value += last.Value;
-                    SteadyStateValues.RemoveAt(i + 1);
-                }
-
-            }
-        }
-
-        public void Simplify()
+        public void Simplify() //TODO fix up: needlessly searching for the equiv Pi when it was already found in the previous method
         {
             double compliment = 1;
 
