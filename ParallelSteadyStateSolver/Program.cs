@@ -8,24 +8,24 @@ namespace ParallelSteadyStateSolver
 {
     class Program
     {
-        const int N = 10;
+        const int N = 100;
         static Random rand = new Random(42);
 
         static void Main(string[] args)
         {
 
-            double[,] mchain =
-            {
-                {0.65, 0.15, 0.1},
-                {0.25, 0.65, 0.4},
-                {0.1,  0.2,  0.5},
-            };
+            //double[,] mchain =
+            //{
+            //    {0.65, 0.15, 0.1},
+            //    {0.25, 0.65, 0.4},
+            //    {0.1,  0.2,  0.5},
+            //};
 
-            MarkovChain m = new MarkovChain(mchain);
-            Console.WriteLine(m);
+            //MarkovChain m = new MarkovChain(mchain);
+            //Console.WriteLine(m);
 
-            var solved = m.SteadyStateValues();
-            foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
+            //var solved = m.SteadyStateValues();
+            //foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
 
             //var solved2 = m.SteadyStateValues2();
             //foreach (var s in solved2) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
@@ -46,19 +46,16 @@ namespace ParallelSteadyStateSolver
             //}
             //foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
 
-            //var m = new MarkovChain(AllocateMatrix(N));
+            var m = new MarkovChain(AllocateMatrix(N));
 
-            //Stopwatch stopwatch = new Stopwatch();
-            //stopwatch.Start();
-            
-            //var solved = m.SteadyStateValues();
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            var solved = m.SteadyStateValues();
             //foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
 
-            //var solved2 = m.SteadyStateValues2();
-            //foreach (var s in solved2) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
-
-            //stopwatch.Stop();
-            //Console.WriteLine(stopwatch.ElapsedMilliseconds);
+            stopwatch.Stop();
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
             Console.ReadLine();
         }
@@ -116,8 +113,7 @@ namespace ParallelSteadyStateSolver
                     if (i != j)
                     {
                         //i is substituted into j
-                        SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]); 
-                        SteadyStateEquations[j].Consolidate();
+                        SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]);
                         SteadyStateEquations[j].Simplify();
                     }
 
@@ -187,7 +183,7 @@ namespace ParallelSteadyStateSolver
         {
             for (int i = SteadyStateValues.Count - 1; i >= 0; i--)
                 if (SteadyStateValues[i].Pi == subEquation.Equivalent)
-                    SubstituteValue(i, subEquation);
+                    SubstituteValue2(i, subEquation);
         }
 
         private void SubstituteValue(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation)
@@ -198,6 +194,37 @@ namespace ParallelSteadyStateSolver
                 SteadyStateValues.Add(new SteadyStateValue(newSteadyStateValue.Pi, newSteadyStateValue.Value * multiplier));
 
             SteadyStateValues.RemoveAt(oldSteadyStateValueIndex);
+        }
+
+        private void SubstituteValue2(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation)
+        {
+            double multiplier = SteadyStateValues[oldSteadyStateValueIndex].Value;
+            SteadyStateValues.RemoveAt(oldSteadyStateValueIndex);
+
+            foreach (SteadyStateValue newSteadyStateValue in SubEquation.SteadyStateValues)
+            {
+                bool addedFlag = false;
+
+                foreach(SteadyStateValue oldSteadyStateValue in SteadyStateValues)
+                {
+                    if (newSteadyStateValue.Pi == oldSteadyStateValue.Pi)
+                    {
+                        oldSteadyStateValue.Value += (newSteadyStateValue.Value * multiplier);
+                        addedFlag = true;
+                    }
+                }
+
+                if (!addedFlag)
+                    SteadyStateValues.Add(new SteadyStateValue(newSteadyStateValue.Pi, newSteadyStateValue.Value * multiplier));
+
+            }
+
+                //foreach (SteadyStateValue newSteadyStateValue in SubEquation.SteadyStateValues)
+                //    SteadyStateValues.Add(new SteadyStateValue(newSteadyStateValue.Pi, newSteadyStateValue.Value * multiplier));
+
+
+
+            //SteadyStateValues.RemoveAt(oldSteadyStateValueIndex);
         }
 
         //public void Consolidate()
