@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -7,7 +8,7 @@ namespace ParallelSteadyStateSolver
 {
     class Program
     {
-        const int N = 100;
+        const int N = 10;
         static Random rand = new Random(42);
 
         static void Main(string[] args)
@@ -21,17 +22,40 @@ namespace ParallelSteadyStateSolver
             };
 
             MarkovChain m = new MarkovChain(mchain);
-            var solved = m.SteadyStateValues();
             Console.WriteLine(m);
 
+            var solved = m.SteadyStateValues();
             foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
 
-            //var randomMaarkovChain = new MarkovChain(AllocateMatrix(N));
+            //var solved2 = m.SteadyStateValues2();
+            //foreach (var s in solved2) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
+
+            //double[,] mchain = new double[N, N];
+            //for (int i = 0; i < N; i++)
+            //{
+            //    for (int j = 0; j < N; j++)
+            //    {
+            //        mchain[i, j] = (i + j) / 200;
+            //    }
+            //}
+            //for (int k = 0; k < 100; k++)
+            //{
+            //    MarkovChain m = new MarkovChain(mchain);
+            //    var solved = m.SteadyStateValues();
+            //    Console.WriteLine(m);
+            //}
+            //foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
+
+            //var m = new MarkovChain(AllocateMatrix(N));
 
             //Stopwatch stopwatch = new Stopwatch();
             //stopwatch.Start();
+            
+            //var solved = m.SteadyStateValues();
+            //foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
 
-            //var solved = randomMaarkovChain.SteadyStateValues();
+            //var solved2 = m.SteadyStateValues2();
+            //foreach (var s in solved2) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
 
             //stopwatch.Stop();
             //Console.WriteLine(stopwatch.ElapsedMilliseconds);
@@ -102,7 +126,6 @@ namespace ParallelSteadyStateSolver
 
             return SolvedSteadyStateValues;
         }
-
         #region solving
         public double GetPi_0()
         {
@@ -177,20 +200,37 @@ namespace ParallelSteadyStateSolver
             SteadyStateValues.RemoveAt(oldSteadyStateValueIndex);
         }
 
+        //public void Consolidate()
+        //{
+        //    List<int> removalIndices = new List<int>();
+
+        //    for (int i = SteadyStateValues.Count - 1; i >= 0; i--)
+        //        for (int j = SteadyStateValues.Count - 1; j >= 0; j--)
+        //            if (i != j && SteadyStateValues[i].Pi == SteadyStateValues[j].Pi && !removalIndices.Contains(j))
+        //            {
+        //                double p = SteadyStateValues[i].Value;
+        //                removalIndices.Add(i);
+        //                SteadyStateValues[j].Value += p;
+        //            }
+
+        //    removalIndices.ForEach(i => SteadyStateValues.RemoveAt(i));
+        //}
+
         public void Consolidate()
         {
-            List<int> removalIndices = new List<int>();
 
-            for (int i = SteadyStateValues.Count - 1; i >= 0; i--)
-                for (int j = SteadyStateValues.Count - 1; j >= 0; j--)
-                    if (i != j && SteadyStateValues[i].Pi == SteadyStateValues[j].Pi && !removalIndices.Contains(j))
-                    {
-                        double p = SteadyStateValues[i].Value;
-                        removalIndices.Add(i);
-                        SteadyStateValues[j].Value += p;
-                    }
+            for (int i = SteadyStateValues.Count - 2; i >= 0; i--)
+            {
+                SteadyStateValue last = SteadyStateValues[i + 1];
+                SteadyStateValue current = SteadyStateValues[i];
 
-            removalIndices.ForEach(i => SteadyStateValues.RemoveAt(i));
+                if (last.Pi == current.Pi)
+                {
+                    current.Value += last.Value;
+                    SteadyStateValues.RemoveAt(i + 1);
+                }
+
+            }
         }
 
         public void Simplify()
