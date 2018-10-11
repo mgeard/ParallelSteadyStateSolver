@@ -183,20 +183,10 @@ namespace ParallelSteadyStateSolver
         {
             for (int i = SteadyStateValues.Count - 1; i >= 0; i--)
                 if (SteadyStateValues[i].Pi == subEquation.Equivalent)
-                    SubstituteValue2(i, subEquation);
+                    SubstituteValue(i, subEquation);
         }
 
         private void SubstituteValue(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation)
-        {
-            double multiplier = SteadyStateValues[oldSteadyStateValueIndex].Value;
-
-            foreach (SteadyStateValue newSteadyStateValue in SubEquation.SteadyStateValues)
-                SteadyStateValues.Add(new SteadyStateValue(newSteadyStateValue.Pi, newSteadyStateValue.Value * multiplier));
-
-            SteadyStateValues.RemoveAt(oldSteadyStateValueIndex);
-        }
-
-        private void SubstituteValue2(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation)
         {
             double multiplier = SteadyStateValues[oldSteadyStateValueIndex].Value;
             SteadyStateValues.RemoveAt(oldSteadyStateValueIndex);
@@ -204,18 +194,21 @@ namespace ParallelSteadyStateSolver
             foreach (SteadyStateValue newSteadyStateValue in SubEquation.SteadyStateValues)
             {
                 bool addedFlag = false;
+                int newPi = newSteadyStateValue.Pi;
+                double newVal = newSteadyStateValue.Value * multiplier;
 
                 foreach(SteadyStateValue oldSteadyStateValue in SteadyStateValues)
                 {
-                    if (newSteadyStateValue.Pi == oldSteadyStateValue.Pi)
+                    if (newPi == oldSteadyStateValue.Pi)
                     {
-                        oldSteadyStateValue.Value += (newSteadyStateValue.Value * multiplier);
+                        oldSteadyStateValue.Value += newVal;
                         addedFlag = true;
+                        break;
                     }
                 }
 
                 if (!addedFlag)
-                    SteadyStateValues.Add(new SteadyStateValue(newSteadyStateValue.Pi, newSteadyStateValue.Value * multiplier));
+                    SteadyStateValues.Add(new SteadyStateValue(newSteadyStateValue.Pi, newVal));
 
             }
 
