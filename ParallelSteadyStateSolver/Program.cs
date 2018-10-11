@@ -167,7 +167,11 @@ namespace ParallelSteadyStateSolver
         {
             for (int i = SteadyStateValues.Count - 1; i >= 0; i--)
                 if (SteadyStateValues[i].Pi == subEquation.Equivalent)
+                {
                     SubstituteValue(i, subEquation);
+                    break;
+                }
+                    
         }
 
         private void SubstituteValue(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation)
@@ -193,7 +197,6 @@ namespace ParallelSteadyStateSolver
 
                 if (!addedFlag) //is this value guaranteed to have the equivalent Pi
                     SteadyStateValues.Add(new SteadyStateValue(newSteadyStateValue.Pi, newVal));
-
             }
         }
 
