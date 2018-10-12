@@ -98,7 +98,7 @@ namespace ParallelSteadyStateSolver
                     {
                         //i is substituted into j
                         SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]);
-                        SteadyStateEquations[j].Simplify();
+                        //SteadyStateEquations[j].Simplify();
                     }
 
             double pi_0 = GetPi_0();
@@ -179,6 +179,8 @@ namespace ParallelSteadyStateSolver
             double multiplier = SteadyStateValues[oldSteadyStateValueIndex].Value;
             SteadyStateValues.RemoveAt(oldSteadyStateValueIndex);
 
+            double compliment = 1;
+
             foreach (SteadyStateValue newSteadyStateValue in SubEquation.SteadyStateValues)
             {
                 bool addedFlag = false;
@@ -195,9 +197,13 @@ namespace ParallelSteadyStateSolver
                     }
                 }
 
-                if (!addedFlag) //is this value guaranteed to have the equivalent Pi
-                    SteadyStateValues.Add(new SteadyStateValue(newSteadyStateValue.Pi, newVal));
+                if (!addedFlag)
+                    compliment = 1 - newVal;
+
             }
+
+            for (int i = 0; i < SteadyStateValues.Count; i++)
+                SteadyStateValues[i].Value /= compliment;
         }
 
         public void Simplify() //TODO fix up: needlessly searching for the equiv Pi when it was already found in the previous method
