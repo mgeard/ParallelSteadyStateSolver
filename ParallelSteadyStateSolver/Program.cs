@@ -11,7 +11,7 @@ namespace ParallelSteadyStateSolver
         const int N = 100;
         static Random rand = new Random(42);
 
-        static void Main(string[] args)
+        static void Main(string[] args) //TODO: write code to get a proper average execution time
         {
 
             double[,] mchain =
@@ -26,10 +26,7 @@ namespace ParallelSteadyStateSolver
 
             var solved = m.SteadyStateValues();
             foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
-
-
-
-
+            
             var m2 = new MarkovChain(AllocateMatrix(N));
 
             Stopwatch stopwatch = new Stopwatch();
@@ -78,7 +75,7 @@ namespace ParallelSteadyStateSolver
 
             for (int i = 0; i < Len; i++)
             {
-                double[] row = Enumerable.Range(0, Len)
+                double[] row = Enumerable.Range(0, Len) //NOTE: I could possible use PLINQ here?
                     .Select(x => matrix[i, x])
                     .ToArray();
 
@@ -96,13 +93,10 @@ namespace ParallelSteadyStateSolver
                 for (int j = 1; j < SteadyStateEquations.Length; j++)
                     if (i != j)
                     {
-                        //i is substituted into j
-                        SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]);
-                        //SteadyStateEquations[j].Simplify();
+                        SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]); //i is substituted into j
                     }
-
-            double pi_0 = GetPi_0();
-            SolveAll(pi_0);
+            
+            SolveAll(GetPi_0());
 
             return SolvedSteadyStateValues;
         }
@@ -124,9 +118,7 @@ namespace ParallelSteadyStateSolver
             for (int i = 1; i < Len; i++)
             {
                 SteadyStateEquation equation = SteadyStateEquations[i];
-                double valueInTermsOfPi_0 = equation.SteadyStateValues.First().Value;
-                SteadyStateValue solved = new SteadyStateValue(equation.Equivalent, valueInTermsOfPi_0 * pi_0Value);
-                SolvedSteadyStateValues[equation.Equivalent] = solved;
+                SolvedSteadyStateValues[equation.Equivalent] = new SteadyStateValue(equation.Equivalent, equation.SteadyStateValues.First().Value * pi_0Value);
             }
         }
         #endregion solving
@@ -200,7 +192,6 @@ namespace ParallelSteadyStateSolver
 
                 if (!addedFlag)
                     compliment = 1 - newVal;
-
             }
 
             //does the same thing as simplification
