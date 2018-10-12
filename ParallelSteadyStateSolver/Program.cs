@@ -165,8 +165,9 @@ namespace ParallelSteadyStateSolver
         #region substitution
         public void SubstituteEquation(SteadyStateEquation subEquation)
         {
+            int substitutePi = subEquation.Equivalent;
             for (int i = SteadyStateValues.Count - 1; i >= 0; i--)
-                if (SteadyStateValues[i].Pi == subEquation.Equivalent)
+                if (SteadyStateValues[i].Pi == substitutePi)
                 {
                     SubstituteValue(i, subEquation);
                     break;
