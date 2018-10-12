@@ -179,19 +179,19 @@ namespace ParallelSteadyStateSolver
             double multiplier = SteadyStateValues[oldSteadyStateValueIndex].Value;
             SteadyStateValues.RemoveAt(oldSteadyStateValueIndex);
 
-            double compliment = 1;
+            double compliment = 1; //1 - does not change value if new compliment is not found
 
             foreach (SteadyStateValue newSteadyStateValue in SubEquation.SteadyStateValues)
             {
-                bool addedFlag = false;
-                int newPi = newSteadyStateValue.Pi;
+                bool addedFlag = false; //was a value added in this iteration?
+                int newPi = newSteadyStateValue.Pi; 
                 double newVal = newSteadyStateValue.Value * multiplier;
 
                 foreach(SteadyStateValue oldSteadyStateValue in SteadyStateValues)
                 {
                     if (newPi == oldSteadyStateValue.Pi)
                     {
-                        oldSteadyStateValue.Value += newVal;
+                        oldSteadyStateValue.Value += newVal; //adds the new value to the old value
                         addedFlag = true;
                         break;
                     }
@@ -202,11 +202,13 @@ namespace ParallelSteadyStateSolver
 
             }
 
-            for (int i = 0; i < SteadyStateValues.Count; i++)
+            //does the same thing as simplification
+            //pi_k is already removed so it just scales the remaining values to the compliment
+            for (int i = 0; i < SteadyStateValues.Count; i++) 
                 SteadyStateValues[i].Value /= compliment;
         }
 
-        public void Simplify() //TODO fix up: needlessly searching for the equiv Pi when it was already found in the previous method
+        public void Simplify()
         {
             double compliment = 1;
 
