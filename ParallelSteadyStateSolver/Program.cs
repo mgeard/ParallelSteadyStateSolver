@@ -100,6 +100,7 @@ namespace ParallelSteadyStateSolver
 
             return SolvedSteadyStateValues;
         }
+
         #region solving
         public double GetPi_0()
         {
