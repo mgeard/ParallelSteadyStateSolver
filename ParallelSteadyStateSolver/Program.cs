@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ParallelSteadyStateSolver
 {
@@ -90,11 +91,14 @@ namespace ParallelSteadyStateSolver
                 steadyStateEquation.Simplify();
 
             for (int i = 1; i < SteadyStateEquations.Length; i++)
-                for (int j = 1; j < SteadyStateEquations.Length; j++)
+            {
+                Parallel.For(0, SteadyStateEquations.Length, (j) =>
+                {
                     if (i != j)
-                    {
-                        SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]); //i is substituted into j
-                    }
+                        SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]);
+                });
+            }
+                
             
             SolveAll(GetPi_0());
 
