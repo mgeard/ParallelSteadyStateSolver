@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ParallelSteadyStateSolver
@@ -39,9 +40,12 @@ namespace ParallelSteadyStateSolver
             stopwatch.Stop();
             Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
+            Thread.Sleep(1000);
+
             Console.ReadLine();
         }
 
+        //NOTE: not part of the algorithm but this may also be parallelisable
         static double[,] AllocateMatrix(int n, bool initialize = true)
         {
             var matrix = new double[n, n];
@@ -61,8 +65,8 @@ namespace ParallelSteadyStateSolver
 
     public class MarkovChain
     {
-        private double[,] Matrix;
-        private SteadyStateEquation[] SteadyStateEquations;
+        private double[,] Matrix; //could possibly also flatten 2d arrays
+        private SteadyStateEquation[] SteadyStateEquations; 
         private SteadyStateValue[] SolvedSteadyStateValues;
         private int Len;
 
@@ -76,7 +80,7 @@ namespace ParallelSteadyStateSolver
 
             for (int i = 0; i < Len; i++)
             {
-                double[] row = Enumerable.Range(0, Len) //NOTE: I could possible use PLINQ here?
+                double[] row = Enumerable.Range(0, Len) //NOTE: I could possibly use PLINQ here?
                     .Select(x => matrix[i, x])
                     .ToArray();
 
@@ -94,11 +98,10 @@ namespace ParallelSteadyStateSolver
             {
                 Parallel.For(0, SteadyStateEquations.Length, (j) =>
                 {
-                    if (i != j)
+                    if (i != j) //NOTE: might even be faster to NOT have this line of code?
                         SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]);
                 });
             }
-                
             
             SolveAll(GetPi_0());
 
@@ -110,7 +113,9 @@ namespace ParallelSteadyStateSolver
         {
             double sum = 1;
 
-            for (int i = 1; i < SteadyStateEquations.Length; i++)
+            //NOTE: potentially parallelisable using some tricky methods
+            //break the iteration space into chunks, then sum those chunks, and add them together after
+            for (int i = 1; i < SteadyStateEquations.Length; i++) 
                 sum += SteadyStateEquations[i].SteadyStateValues.First().Value;
 
             return 1 / sum;
@@ -120,6 +125,7 @@ namespace ParallelSteadyStateSolver
         {
             SolvedSteadyStateValues[0] = new SteadyStateValue(0, pi_0Value);
 
+            //NOTE: seems easily parallelisable
             for (int i = 1; i < Len; i++)
             {
                 SteadyStateEquation equation = SteadyStateEquations[i];
@@ -155,6 +161,11 @@ namespace ParallelSteadyStateSolver
 
             SteadyStateValues = new List<SteadyStateValue>();
 
+            //NOTE: parallelising here breaks the Simplify() method
+            //Parallel.For(0, values.Length, (i) =>
+            //{
+            //    SteadyStateValues.Add(new SteadyStateValue(i, values[i]));
+            //});
             for (int i = 0; i < values.Length; i++)
                 SteadyStateValues.Add(new SteadyStateValue(i, values[i]));
         }
@@ -162,6 +173,8 @@ namespace ParallelSteadyStateSolver
         #region substitution
         public void SubstituteEquation(SteadyStateEquation subEquation)
         {
+            //NOTE: parallelism could possible by utilised here to find the required SteadyStateValue here,
+            //but dealing with the unsuccessful threads will be a problem
             int substitutePi = subEquation.Equivalent;
             for (int i = SteadyStateValues.Count - 1; i >= 0; i--)
                 if (SteadyStateValues[i].Pi == substitutePi)
@@ -169,9 +182,10 @@ namespace ParallelSteadyStateSolver
                     SubstituteValue(i, subEquation);
                     break;
                 }
-                    
         }
 
+        //NOTE: Utilising a hash table might make this algorithm way faster
+        //TODO: figure out why the list of SteadyStateValues is not already a hash table
         private void SubstituteValue(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation)
         {
             double multiplier = SteadyStateValues[oldSteadyStateValueIndex].Value;
@@ -185,7 +199,9 @@ namespace ParallelSteadyStateSolver
                 int newPi = newSteadyStateValue.Pi; 
                 double newVal = newSteadyStateValue.Value * multiplier;
 
-                foreach(SteadyStateValue oldSteadyStateValue in SteadyStateValues)
+                //NOTE: This NEEDS to be done with a hash table! 
+                //Theta(1)!
+                foreach (SteadyStateValue oldSteadyStateValue in SteadyStateValues) 
                 {
                     if (newPi == oldSteadyStateValue.Pi)
                     {
