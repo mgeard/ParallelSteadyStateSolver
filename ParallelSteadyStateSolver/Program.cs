@@ -42,7 +42,7 @@ namespace ParallelSteadyStateSolver
 
             Thread.Sleep(1000);
 
-            Console.ReadLine();
+                Console.ReadLine();
         }
 
         //NOTE: not part of the algorithm but this may also be parallelisable
@@ -65,7 +65,7 @@ namespace ParallelSteadyStateSolver
 
     public class MarkovChain
     {
-        private double[,] Matrix; //could possibly also flatten 2d arrays
+        private double[,] Matrix; //could possibly also flatten 2d arrays - (this matrix is not used - maybe get rid of it)
         private SteadyStateEquation[] SteadyStateEquations; 
         private SteadyStateValue[] SolvedSteadyStateValues;
         private int Len;
@@ -78,9 +78,13 @@ namespace ParallelSteadyStateSolver
             SteadyStateEquations = new SteadyStateEquation[Len];
             SolvedSteadyStateValues = new SteadyStateValue[Len];
 
-            for (int i = 0; i < Len; i++)
+            //NOTE: Parallelising the i loop breaks the code SOMETIMES
+            //^ need to ensure that pi_0 in in index 0
+
+            for (int i = 0; i < Len; i++) //NOTE: is this loop also parallelisable? Find out!
             {
-                double[] row = Enumerable.Range(0, Len) //NOTE: I could possibly use PLINQ here?
+                //NOTE: adding AsParallel() breaks the code.
+                double[] row = Enumerable.Range(0, Len).AsParallel().AsOrdered()
                     .Select(x => matrix[i, x])
                     .ToArray();
 
@@ -94,6 +98,8 @@ namespace ParallelSteadyStateSolver
             foreach (SteadyStateEquation steadyStateEquation in SteadyStateEquations) 
                 steadyStateEquation.Simplify();
 
+            //i loop cannot be parallelised
+            //actually... there may be some sneaky stuff I could do here...
             for (int i = 1; i < SteadyStateEquations.Length; i++)
             {
                 Parallel.For(0, SteadyStateEquations.Length, (j) =>
@@ -111,12 +117,20 @@ namespace ParallelSteadyStateSolver
         #region solving
         public double GetPi_0()
         {
-            double sum = 1;
+            //double sum = 1;
 
-            //NOTE: potentially parallelisable using some tricky methods
-            //break the iteration space into chunks, then sum those chunks, and add them together after
-            for (int i = 1; i < SteadyStateEquations.Length; i++) 
-                sum += SteadyStateEquations[i].SteadyStateValues.First().Value;
+            ////NOTE: potentially parallelisable using some tricky methods
+            ////break the iteration space into chunks, then sum those chunks, and add them together after
+            //for (int i = 1; i < SteadyStateEquations.Length; i++)
+            //    sum += SteadyStateEquations[i].SteadyStateValues.First().Value;
+
+            SteadyStateEquations[0].SteadyStateValues.Add(new SteadyStateValue(0, 1)); //ghetto solution - perhaps change later
+
+            //pretty sure this works
+            double sum = SteadyStateEquations.AsParallel().Sum(x =>
+            {
+                return x.SteadyStateValues.First().Value;
+            });
 
             return 1 / sum;
         }
@@ -198,9 +212,7 @@ namespace ParallelSteadyStateSolver
                 bool addedFlag = false; //was a value added in this iteration?
                 int newPi = newSteadyStateValue.Pi; 
                 double newVal = newSteadyStateValue.Value * multiplier;
-
-                //NOTE: This NEEDS to be done with a hash table! 
-                //Theta(1)!
+                
                 foreach (SteadyStateValue oldSteadyStateValue in SteadyStateValues) 
                 {
                     if (newPi == oldSteadyStateValue.Pi)
