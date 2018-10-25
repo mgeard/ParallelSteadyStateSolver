@@ -92,91 +92,27 @@ namespace ParallelSteadyStateSolver
             }
         }
 
-
         public SteadyStateValue[] SteadyStateValues() //solve
         {
             //simplifcation can be done to make things simpler from the start
             foreach (SteadyStateEquation steadyStateEquation in SteadyStateEquations)
                 steadyStateEquation.Simplify();
 
-            //firstly, iterate through all of the depencies
-            //this will, I think, require me to iterate through every value...
-            //of i, and i + 1
-            //can probably be done  in a single for loop
-            for(int i = 1; i < SteadyStateEquations.Length - 1; i++)
+            //i loop cannot be parallelised
+            //actually... there may be some sneaky stuff I could do here...
+            for (int i = 1; i < SteadyStateEquations.Length; i++)
             {
-                SteadyStateEquations[i + 1].SubstituteEquation(SteadyStateEquations[i]);
-            }
-
-            //then iterate through the remaining values
-
-            //Parallel.For(1, SteadyStateEquations.Length, (i) => //this appears to work for my test 3x3 matrix, however a collection modified error occurs for the random matrix 
-            //{                                                   //TODO: find out why!
-            //    Parallel.For(0, SteadyStateEquations.Length, (j) =>
-            //    {
-            //        if (i != j && i + 1 != j) //NOTE: might even be faster to NOT have this line of code?
-            //            SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]);
-            //    });
-            //});
-
-            //for (int i = 1; i < SteadyStateEquations.Length; i++)
-            //{
-            //    Parallel.For(0, SteadyStateEquations.Length, (j) =>
-            //    {
-            //        if (i != j && i + 1 != j) //NOTE: might even be faster to NOT have this line of code?
-            //                SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]);
-            //    });
-            //}
-
-            //so parallelising the i loop causes a problem even when j is sequantial
-            //hmmmmmmmm
-            //per
-            Parallel.For(1, SteadyStateEquations.Length, (i) => //this appears to work for my test 3x3 matrix, however a collection modified error occurs for the random matrix 
-            {                                                   //TODO: find out why!
-                //Parallel.For(0, SteadyStateEquations.Length, (j) =>
-                //{
-                //    if (i != j && i + 1 != j) //NOTE: might even be faster to NOT have this line of code?
-                //        SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]);
-                //});
-
-                for (int j = 1; j < SteadyStateEquations.Length; j++)
+                Parallel.For(0, SteadyStateEquations.Length, (j) =>
                 {
-                    if (i != j && i + 1 != j) //NOTE: might even be faster to NOT have this line of code?
+                    if (i != j) //NOTE: might even be faster to NOT have this line of code?
                         SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]);
-                }
-            });
+                });
+            }
 
             SolveAll(GetPi_0());
 
             return SolvedSteadyStateValues;
         }
-        
-
-
-
-        
-
-        //public SteadyStateValue[] SteadyStateValues() //solve
-        //{
-        //    //simplifcation can be done to make things simpler from the start
-        //    foreach (SteadyStateEquation steadyStateEquation in SteadyStateEquations) 
-        //        steadyStateEquation.Simplify();
-
-        //    //i loop cannot be parallelised
-        //    //actually... there may be some sneaky stuff I could do here...
-        //    for (int i = 1; i < SteadyStateEquations.Length; i++)
-        //    {
-        //        Parallel.For(0, SteadyStateEquations.Length, (j) =>
-        //        {
-        //            if (i != j) //NOTE: might even be faster to NOT have this line of code?
-        //                SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]);
-        //        });
-        //    }
-
-        //    SolveAll(GetPi_0());
-
-        //    return SolvedSteadyStateValues;
-        //}
 
         #region solving
         public double GetPi_0()
