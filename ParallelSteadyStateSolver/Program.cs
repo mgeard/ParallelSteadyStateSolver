@@ -42,7 +42,7 @@ namespace ParallelSteadyStateSolver
 
             Thread.Sleep(1000);
 
-                Console.ReadLine();
+            Console.ReadLine();
         }
 
         //NOTE: not part of the algorithm but this may also be parallelisable
@@ -200,7 +200,51 @@ namespace ParallelSteadyStateSolver
 
         //NOTE: Utilising a hash table might make this algorithm way faster
         //TODO: figure out why the list of SteadyStateValues is not already a hash table
-        private void SubstituteValue(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation)
+        //private void SubstituteValue(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation)
+        //{
+        //    double multiplier = SteadyStateValues[oldSteadyStateValueIndex].Value;
+        //    SteadyStateValues.RemoveAt(oldSteadyStateValueIndex);
+
+        //    double compliment = 1; //1 - does not change value if new compliment is not found
+
+        //    var substitutionValues = SubEquation.SteadyStateValues;
+        //    Parallel.For(0, SubEquation.SteadyStateValues.Count, (i) =>
+        //    {
+        //        bool addedFlag = false; //was a value added in this iteration?
+        //        int newPi = substitutionValues[i].Pi;
+        //        double newVal = substitutionValues[i].Value * multiplier;
+
+        //        //Parallel.For(0, SteadyStateValues.Count, (j) =>
+        //        //  {
+        //        //    //SteadyStateValue oldSteadyStateValue = SteadyStateValues[j];
+        //        //    if (newPi == SteadyStateValues[j].Pi)
+        //        //      {
+        //        //          SteadyStateValues[j].Value += newVal; //adds the new value to the old value
+        //        //        addedFlag = true;
+        //        //      }
+        //        //  });
+
+        //        //Parallelising this loop results in a massive performance loss
+        //        foreach (SteadyStateValue oldSteadyStateValue in SteadyStateValues)
+        //        {
+        //            if (newPi == oldSteadyStateValue.Pi)
+        //            {
+        //                oldSteadyStateValue.Value += newVal; //adds the new value to the old value
+        //                addedFlag = true;
+        //                break;
+        //            }
+        //        }
+
+        //        if (!addedFlag)
+        //            compliment = 1 - newVal;
+        //    });
+        //    for (int i = 0; i < SteadyStateValues.Count; i++)
+        //        SteadyStateValues[i].Value /= compliment;
+        //}
+
+        //NOTE: Utilising a hash table might make this algorithm way faster
+        //TODO: figure out why the list of SteadyStateValues is not already a hash table
+        private void SubstituteValue(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation) //parallelising everything here hurts performance
         {
             double multiplier = SteadyStateValues[oldSteadyStateValueIndex].Value;
             SteadyStateValues.RemoveAt(oldSteadyStateValueIndex);
@@ -210,10 +254,10 @@ namespace ParallelSteadyStateSolver
             foreach (SteadyStateValue newSteadyStateValue in SubEquation.SteadyStateValues)
             {
                 bool addedFlag = false; //was a value added in this iteration?
-                int newPi = newSteadyStateValue.Pi; 
+                int newPi = newSteadyStateValue.Pi;
                 double newVal = newSteadyStateValue.Value * multiplier;
-                
-                foreach (SteadyStateValue oldSteadyStateValue in SteadyStateValues) 
+
+                foreach (SteadyStateValue oldSteadyStateValue in SteadyStateValues)
                 {
                     if (newPi == oldSteadyStateValue.Pi)
                     {
@@ -229,8 +273,13 @@ namespace ParallelSteadyStateSolver
 
             //does the same thing as simplification
             //pi_k is already removed so it just scales the remaining values to the compliment
-            for (int i = 0; i < SteadyStateValues.Count; i++) 
+            for (int i = 0; i < SteadyStateValues.Count; i++) //NOTE: Parallelising this loop hurts performance
                 SteadyStateValues[i].Value /= compliment;
+
+            //Parallel.For(0, SteadyStateValues.Count, (i) =>
+            //{
+            //    SteadyStateValues[i].Value /= compliment;
+            //});
         }
 
         public void Simplify()
