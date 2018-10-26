@@ -11,6 +11,9 @@ namespace ParallelSteadyStateSolver
     class Program
     {
         const int N = 100;
+        const int N_TRIALS = 100;
+        const int MAX_MATRIX_SIZE = 100;
+
         static Random rand = new Random(42);
 
         static void Main(string[] args) //TODO: write code to get a proper average execution time
@@ -28,7 +31,7 @@ namespace ParallelSteadyStateSolver
 
             var solved = m.SteadyStateValues();
             foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
-            
+
             var m2 = new MarkovChain(AllocateMatrix(N));
 
             Stopwatch stopwatch = new Stopwatch();
@@ -40,9 +43,41 @@ namespace ParallelSteadyStateSolver
             stopwatch.Stop();
             Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
+            //RecordExecutionTimes();
+
             Thread.Sleep(1000);
 
             Console.ReadLine();
+        }
+
+        public static void RecordExecutionTimes()
+        {
+            StringBuilder results = new StringBuilder();
+            Stopwatch stopwatch = new Stopwatch();
+
+
+            for (int i = 0; i < N_TRIALS; i++)
+            {
+                Console.WriteLine(i);
+                for (int j = 0; j <= MAX_MATRIX_SIZE; j++)
+                {
+                    var m = new MarkovChain(AllocateMatrix(N));
+
+                    stopwatch.Start();
+                    m.SteadyStateValues();
+                    stopwatch.Stop();
+
+                    results.Append($"{stopwatch.ElapsedTicks}, ");
+
+                    stopwatch.Reset();
+
+                }
+
+                results.AppendLine("");
+
+            }
+
+            results.Write("BruteForceMedianExecutionTimeResults.csv");
         }
 
         //NOTE: not part of the algorithm but this may also be parallelisable
