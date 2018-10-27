@@ -11,7 +11,7 @@ namespace ParallelSteadyStateSolver
     class Program
     {
         const int N = 100;
-        const int N_TRIALS = 100;
+        const int N_TRIALS = 10;
         const int MAX_MATRIX_SIZE = 100;
 
         static Random rand = new Random(42);
@@ -44,10 +44,49 @@ namespace ParallelSteadyStateSolver
             Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
             //RecordExecutionTimes();
-
+            RecordThreadExecutionTimes();
             Thread.Sleep(1000);
 
             Console.ReadLine();
+        }
+
+        public static void RecordThreadExecutionTimes()
+        {
+            StringBuilder results = new StringBuilder();
+            Stopwatch stopwatch = new Stopwatch();
+
+
+            for (int i = 1; i <= N_TRIALS; i++)
+            {
+                
+                Console.WriteLine(i);
+                for (int j = 1; j <= 8; j++)
+                {
+                    ThreadPool.SetMinThreads(8, 8);
+                    ThreadPool.SetMaxThreads(8, 8);
+                    var m = new MarkovChain(AllocateMatrix(500));
+
+                    ThreadPool.SetMinThreads(j, j);
+                    ThreadPool.SetMaxThreads(j, j);
+
+                    stopwatch.Start();
+                    m.SteadyStateValues();
+                    stopwatch.Stop();
+
+                    ThreadPool.SetMinThreads(8, 8);
+                    ThreadPool.SetMaxThreads(8, 8);
+
+                    results.Append($"{stopwatch.ElapsedTicks}, ");
+
+                    stopwatch.Reset();
+
+                }
+
+                results.AppendLine("");
+
+            }
+
+            results.Write("ParallelThreadTimes.csv");
         }
 
         public static void RecordExecutionTimes()
@@ -59,9 +98,9 @@ namespace ParallelSteadyStateSolver
             for (int i = 0; i < N_TRIALS; i++)
             {
                 Console.WriteLine(i);
-                for (int j = 0; j <= MAX_MATRIX_SIZE; j++)
+                for (int j = 3; j <= MAX_MATRIX_SIZE; j++)
                 {
-                    var m = new MarkovChain(AllocateMatrix(N));
+                    var m = new MarkovChain(AllocateMatrix(j));
 
                     stopwatch.Start();
                     m.SteadyStateValues();
