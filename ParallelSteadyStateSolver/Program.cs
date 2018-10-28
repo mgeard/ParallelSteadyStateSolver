@@ -11,10 +11,10 @@ namespace ParallelSteadyStateSolver
     class Program
     {
         const int N = 100;
+        static Random rand = new Random(42);
+
         const int N_TRIALS = 10;
         const int MAX_MATRIX_SIZE = 100;
-
-        static Random rand = new Random(42);
 
         static void Main(string[] args) //TODO: write code to get a proper average execution time
         {
@@ -32,19 +32,20 @@ namespace ParallelSteadyStateSolver
             var solved = m.SteadyStateValues();
             foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
 
-            var m2 = new MarkovChain(AllocateMatrix(N));
-
+            var randomMatrix = AllocateMatrix(N);
+            var m2 = new MarkovChain(randomMatrix);
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
+            
             var solved2 = m2.SteadyStateValues();
-            //foreach (var s in solved) Console.WriteLine($"pi_{s.Pi} = {s.Value}");
 
             stopwatch.Stop();
+
             Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
             //RecordExecutionTimes();
-            RecordThreadExecutionTimes();
+            //RecordThreadExecutionTimes();
             Thread.Sleep(1000);
 
             Console.ReadLine();
@@ -154,31 +155,30 @@ namespace ParallelSteadyStateSolver
 
             //NOTE: Parallelising the i loop breaks the code SOMETIMES
             //^ need to ensure that pi_0 in in index 0
-
-            for (int i = 0; i < Len; i++) //NOTE: is this loop also parallelisable? Find out!
+            Parallel.For(0, Len, (i) =>
             {
-                //NOTE: adding AsParallel() breaks the code.
-                double[] row = Enumerable.Range(0, Len).AsParallel().AsOrdered()
+                //NOTE: parallelism here results in an enourmous performance decrease
+                double[] row = Enumerable.Range(0, Len)//.AsParallel().AsOrdered()
                     .Select(x => matrix[i, x])
                     .ToArray();
 
                 SteadyStateEquations[i] = new SteadyStateEquation(i, row);
-            }
+            });
         }
 
         public SteadyStateValue[] SteadyStateValues() //solve
         {
-            //simplifcation can be done to make things simpler from the start
-            foreach (SteadyStateEquation steadyStateEquation in SteadyStateEquations)
+            Parallel.ForEach(SteadyStateEquations, (steadyStateEquation) =>
+            {
                 steadyStateEquation.Simplify();
+            });
 
             //i loop cannot be parallelised
-            //actually... there may be some sneaky stuff I could do here...
             for (int i = 1; i < SteadyStateEquations.Length; i++)
             {
                 Parallel.For(0, SteadyStateEquations.Length, (j) =>
                 {
-                    if (i != j) //NOTE: might even be faster to NOT have this line of code?
+                    if (i != j)
                         SteadyStateEquations[j].SubstituteEquation(SteadyStateEquations[i]);
                 });
             }
@@ -191,16 +191,8 @@ namespace ParallelSteadyStateSolver
         #region solving
         public double GetPi_0()
         {
-            //double sum = 1;
+            SteadyStateEquations[0].SteadyStateValues.Add(new SteadyStateValue(0, 1));
 
-            ////NOTE: potentially parallelisable using some tricky methods
-            ////break the iteration space into chunks, then sum those chunks, and add them together after
-            //for (int i = 1; i < SteadyStateEquations.Length; i++)
-            //    sum += SteadyStateEquations[i].SteadyStateValues.First().Value;
-
-            SteadyStateEquations[0].SteadyStateValues.Add(new SteadyStateValue(0, 1)); //ghetto solution - perhaps change later
-
-            //pretty sure this works
             double sum = SteadyStateEquations.AsParallel().Sum(x =>
             {
                 return x.SteadyStateValues.First().Value;
@@ -213,12 +205,12 @@ namespace ParallelSteadyStateSolver
         {
             SolvedSteadyStateValues[0] = new SteadyStateValue(0, pi_0Value);
 
-            //NOTE: seems easily parallelisable
-            for (int i = 1; i < Len; i++)
+            Parallel.For(1, Len, (i) =>
             {
                 SteadyStateEquation equation = SteadyStateEquations[i];
-                SolvedSteadyStateValues[equation.Equivalent] = new SteadyStateValue(equation.Equivalent, equation.SteadyStateValues.First().Value * pi_0Value);
-            }
+                SolvedSteadyStateValues[equation.Equivalent] 
+                    = new SteadyStateValue(equation.Equivalent, equation.SteadyStateValues.First().Value * pi_0Value);
+            });
         }
         #endregion solving
 
@@ -272,8 +264,7 @@ namespace ParallelSteadyStateSolver
                 }
         }
 
-        //NOTE: Utilising a hash table might make this algorithm way faster
-        //TODO: figure out why the list of SteadyStateValues is not already a hash table
+        ////parallelism here results in a significant drop in performance
         //private void SubstituteValue(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation)
         //{
         //    double multiplier = SteadyStateValues[oldSteadyStateValueIndex].Value;
@@ -316,25 +307,21 @@ namespace ParallelSteadyStateSolver
         //        SteadyStateValues[i].Value /= compliment;
         //}
 
-        //NOTE: Utilising a hash table might make this algorithm way faster
-        //TODO: figure out why the list of SteadyStateValues is not already a hash table
-        private void SubstituteValue(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation) //parallelising everything here hurts performance
+        //NOTE: parallelising everything here hurts performance
+        private void SubstituteValue(int oldSteadyStateValueIndex, SteadyStateEquation SubEquation) 
         {
             double multiplier = SteadyStateValues[oldSteadyStateValueIndex].Value;
             SteadyStateValues.RemoveAt(oldSteadyStateValueIndex);
 
             double compliment = 1; //1 - does not change value if new compliment is not found
 
-            //a soltuion here might be to copy the Subequation into a new object
-
-
-            foreach (SteadyStateValue newSteadyStateValue in SubEquation.SteadyStateValues) //System.InvalidOperationException: 'Collection was modified; enumeration operation may not execute.'
+            foreach (SteadyStateValue newSteadyStateValue in SubEquation.SteadyStateValues) 
             {
                 bool addedFlag = false; //was a value added in this iteration?
                 int newPi = newSteadyStateValue.Pi;
                 double newVal = newSteadyStateValue.Value * multiplier;
 
-                foreach (SteadyStateValue oldSteadyStateValue in SteadyStateValues) ///aha! when two threads are trying to substitute into the same sub-equation, there seems to be a race condition
+                foreach (SteadyStateValue oldSteadyStateValue in SteadyStateValues)
                 {
                     if (newPi == oldSteadyStateValue.Pi)
                     {
@@ -353,6 +340,7 @@ namespace ParallelSteadyStateSolver
             for (int i = 0; i < SteadyStateValues.Count; i++) //NOTE: Parallelising this loop hurts performance
                 SteadyStateValues[i].Value /= compliment;
 
+            //NOTE: too much overhead
             //Parallel.For(0, SteadyStateValues.Count, (i) =>
             //{
             //    SteadyStateValues[i].Value /= compliment;
